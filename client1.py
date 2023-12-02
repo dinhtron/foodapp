@@ -1,6 +1,6 @@
 import socket
 import json
-
+import os
 def main():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(("127.0.0.1", 8080))
@@ -19,10 +19,12 @@ def main():
 
     if auth_result == "truse":
         while True:
+            os.system("cls")
             # Hiển thị menu lựa chọn
             print("1. Datsan")
             print("2. Lichsu")
-            print("3. Thoat")
+            print("3. Huydat")
+            print("4. Thoat")
 
             choice = input("Enter your choice: ")
 
@@ -51,6 +53,14 @@ def main():
                 data_received = client.recv(1024).decode()
                 san_da_dat_info = json.loads(data_received)
                 print("Danh sách sân đã đặt:", san_da_dat_info["san_da_dat"])
+            elif choice == "huydat":
+                # Nhập thông tin về sân cần hủy đặt
+                chosen_san_to_cancel = input("Nhap san can huy dat: ")
+                client.send(chosen_san_to_cancel.encode())
+
+                # Nhận kết quả hủy đặt sân từ server
+                result = client.recv(1024).decode()
+                print(result)
             else:
                 print("Invalid choice")
 
