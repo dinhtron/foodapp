@@ -1,6 +1,6 @@
 import socket
 import json
-
+import os
 # Danh sách tài khoản
 users = {"trong": "123", "user2": "pass2", "user3": "pass3"}
 
@@ -18,6 +18,7 @@ def handle_client(client_socket):
         client_socket.send("truse".encode())
 
         while True:
+            # os.system("cls")
             # Nhận lựa chọn từ client
             choice = client_socket.recv(1024).decode()
 
@@ -41,16 +42,41 @@ def handle_client(client_socket):
                     san_da_dat.add((chosen_san, chosen_gio_dat))
 
                     # Xử lý đặt sân
-                    result = f"Da dat san {chosen_san} vao luc {chosen_gio_dat}"
+                    success = True
                 else:
-                    result = f"San {chosen_san} da bi dat, vui long chon san khac."
+                    success = False
 
                 # Gửi kết quả đặt sân về client
-                client_socket.send(result.encode())
+                if success:
+                    print("Người dùng đặt sân :"+ chosen_san+ " - thời gian:"+chosen_gio_dat)
+                    confirm = input("Bạn muốn xác nhận đặt sân thành công (yes/no)? ")
+                    if confirm.lower() == "yes":
+                        client_socket.send("thành công".encode())
+                    else:
+        
+                       san_da_dat.remove((chosen_san, chosen_gio_dat))
+                       fail_message = input("Lý do đặt sân không thành công: ")
+                       client_socket.send(f"Đặt sân thất bại, {fail_message}".encode())
+                else:
+                    client_socket.send("Nhập sai thông tin".encode())
             elif choice == "lichsu":
                 # Gửi danh sách sân đã đặt về client
                 san_da_dat_info = {"san_da_dat": list(san_da_dat)}
                 client_socket.send(json.dumps(san_da_dat_info).encode())
+            elif choice == "huydat":
+                # Nhận thông tin về sân cần hủy đặt từ client
+                chosen_san = client_socket.recv(1024).decode()
+
+                # Kiểm tra xem sân đã đặt hay chưa
+                if (chosen_san, chosen_gio_dat) in san_da_dat:
+                    # Hủy đặt sân
+                    san_da_dat.remove((chosen_san, chosen_gio_dat))
+                    result = f"Da huy dat san {chosen_san} vao luc {chosen_gio_dat}"
+                else:
+                    result = f"San {chosen_san} chua duoc dat, khong the huy."
+
+                # Gửi kết quả hủy đặt sân về client
+                client_socket.send(result.encode())
             else:
                 client_socket.send("Invalid choice".encode())
 
@@ -69,11 +95,11 @@ def main():
     server.bind(("127.0.0.1", 8080))
     server.listen(5)
 
-    print("[+] Listening for incoming connections")
+    print("- Lắng nghe các kết nối")
 
     while True:
         client, addr = server.accept()
-        print("[+] Accepted connection from: %s:%d" % (addr[0], addr[1]))
+        print("- Chấp nhận kếu nối từ : %s:%d" % (addr[0], addr[1]))
 
         handle_client(client)
 
